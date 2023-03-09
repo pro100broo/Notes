@@ -10,13 +10,13 @@ from pydantic import ValidationError
 
 from databases.json_impl.json_view import Groups, Group, Note
 from databases.json_impl.config import JSON_PATH
-from databases.idatabase import IDataBase
+from databases.idatabase import DataBase
 from settings.colors import ERROR_COLOR, TEXT_COLOR, GROUP_COLOR
 
 from exceptions.json_errors import *
 
 
-class JsonDB(IDataBase):
+class DataBaseJsonImp(DataBase):
     """ Object for storing notes """
     __notes = Groups(groups_list=[])
 
@@ -24,9 +24,9 @@ class JsonDB(IDataBase):
     def _change_groups_list(function):
         """ Decorator for accessing the list of groups """
         def wrapper(*args):
-            notes = JsonDB.__get_notes()
-            JsonDB.__set_notes(function(notes, *args))
-            JsonDB.__dump_json()
+            notes = DataBaseJsonImp.__get_notes()
+            DataBaseJsonImp.__set_notes(function(notes, *args))
+            DataBaseJsonImp.__dump_json()
 
         return wrapper
 
@@ -34,13 +34,13 @@ class JsonDB(IDataBase):
     def _change_notes_list(function):
         """ Decorator for finding and changing a group """
         def wrapper(*args):
-            notes = JsonDB.__get_notes()
+            notes = DataBaseJsonImp.__get_notes()
             for index, group in enumerate(notes.groups_list):
                 if group.name == args[0]:
                     notes.groups_list[index] = function(group, *args)
                     break
-            JsonDB.__set_notes(notes)
-            JsonDB.__dump_json()
+            DataBaseJsonImp.__set_notes(notes)
+            DataBaseJsonImp.__dump_json()
 
         return wrapper
 
@@ -53,7 +53,7 @@ class JsonDB(IDataBase):
                 # If .json file is empty, the following exception raises
                 if not (text := file.read()):
                     raise EmptyJsonFileError
-                JsonDB.__set_notes(Groups.parse_raw(text))
+                DataBaseJsonImp.__set_notes(Groups.parse_raw(text))
         except FileNotFoundError:
             raise JsonLoadingError
         except ValidationError:
@@ -65,31 +65,31 @@ class JsonDB(IDataBase):
         """ Dumps json dictionary from the program to the .json file """
         try:
             with open(JSON_PATH, "w") as file:
-                file.write(JsonDB.__get_notes().json())
+                file.write(DataBaseJsonImp.__get_notes().json())
         except FileNotFoundError | ValidationError:
             raise JsonDumpingError
 
     @staticmethod
     def __set_notes(notes: Groups) -> None:
-        JsonDB.__notes = notes
+        DataBaseJsonImp.__notes = notes
 
     @staticmethod
     def __get_notes() -> Groups:
-        return JsonDB.__notes
+        return DataBaseJsonImp.__notes
 
     @staticmethod
-    def select_attached_group_notes(group_name: str) -> list[str]:
+    def get_attached_group_notes(group_name: str) -> list[str]:
         """
         :return: List of notes of attached group for the autocompletion
         :return: An empty list if the attached group is empty
         """
-        for group in JsonDB.__get_notes().groups_list:
+        for group in DataBaseJsonImp.__get_notes().groups_list:
             if group.name == group_name:
                 return [f"{note.title}" for note in group.notes_list]
         return []
 
     @staticmethod
-    def select_grouped_notes() -> list[str]:
+    def get_grouped_notes() -> list[str]:
         """
         :return: List of notes divided into groups.
 
@@ -98,11 +98,11 @@ class JsonDB(IDataBase):
         Empty groups are highlighted too.
         """
         column = []
-        for group in JsonDB.__get_notes().groups_list:
+        for group in DataBaseJsonImp.__get_notes().groups_list:
             # Painting group name
             column.append(f"{GROUP_COLOR}Group: {group.name}{TEXT_COLOR}")
             # if group is empty
-            if not JsonDB.attached_group_notes(group.name):
+            if not DataBaseJsonImp.select_attached_group_notes(group.name):
                 column.append(ERROR_COLOR + "empty group" + TEXT_COLOR)
             else:
                 for note in group.notes_list:
@@ -111,23 +111,23 @@ class JsonDB(IDataBase):
         return column[:-1]
 
     @staticmethod
-    def select_all_groups() -> list[str]:
+    def get_all_groups() -> list[str]:
         """
         :return: List of all groups from database
         """
-        return [f"{index + 1}. {group.name}" for index, group in enumerate(JsonDB.__get_notes().groups_list)]
+        return [f"{index + 1}. {group.name}" for index, group in enumerate(DataBaseJsonImp.__get_notes().groups_list)]
 
     @staticmethod
-    def select_all_notes() -> list[str]:
+    def get_all_notes() -> list[str]:
         """
         :return: List of all notes from database
         """
-        return [note.title for group in JsonDB.__get_notes().groups_list for note in group.notes_list]
+        return [note.title for group in DataBaseJsonImp.__get_notes().groups_list for note in group.notes_list]
 
     @staticmethod
     def check_group(group_name: str) -> int:
         """ Check existence of the group in database """
-        for group in JsonDB.__get_notes().groups_list:
+        for group in DataBaseJsonImp.__get_notes().groups_list:
             if group.name == group_name:
                 return 1
         return 0
@@ -135,7 +135,7 @@ class JsonDB(IDataBase):
     @staticmethod
     def check_note(note_name: str) -> Note | int:
         """ Check existence of the note in database """
-        for group in JsonDB.__get_notes().groups_list:
+        for group in DataBaseJsonImp.__get_notes().groups_list:
             for note in group.notes_list:
                 if note.title == note_name:
                     return note
@@ -165,7 +165,7 @@ class JsonDB(IDataBase):
     @_change_notes_list
     def create_note(group: Group, group_name: str, title: str, text: str) -> Group:
         group.notes_list.append(Note(
-            note_id=len(JsonDB.attached_group_notes(group_name)),
+            note_id=len(DataBaseJsonImp.select_attached_group_notes(group_name)),
             creation_date=datetime.now(),
             last_change_date=datetime.now(),
             title=title,

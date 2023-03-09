@@ -13,7 +13,7 @@ import pyperclip
 from prompt_toolkit.clipboard.pyperclip import PyperclipClipboard
 
 from view import View
-from json_db import JsonDB
+from json_db import DataBaseJsonImp
 from custom_input import CustomInput
 from databases.json_impl.json_view import Note
 from databases.json_impl.config import JSON_PATH
@@ -77,7 +77,7 @@ class App:
     def _wrong_note_title(function):
         """ Validation of the uncorrected note title.Additionally, an empty group is checked """
         def wrapper(note_title):
-            if not database.select_attached_group_notes(group_title := App.get_attached_group()):
+            if not database.get_attached_group_notes(group_title := App.get_attached_group()):
                 view.print_error_message(f"Group: '{group_title}' is empty")
             elif not (database.check_note(note_title)):
                 view.print_error_message(f"Note title: '{note_title}' doesn't exists")
@@ -132,8 +132,8 @@ class App:
         while True:
             try:
                 view.print_attached_group_and_note(App.get_attached_group(), App.get_attached_note())
-                command = input_handler.command_input(database.select_all_groups(),
-                                                      database.select_attached_group_notes(App.get_attached_group()))
+                command = input_handler.command_input(database.get_all_groups(),
+                                                      database.get_attached_group_notes(App.get_attached_group()))
                 match command.split():
 
                     # Main menu commands
@@ -151,7 +151,7 @@ class App:
 
                     # Groups navigation commands
                     case "groups", :
-                        view.print_table_with_pointer("Groups", database.select_all_groups(), App.get_attached_group())
+                        view.print_table_with_pointer("Groups", database.get_all_groups(), App.get_attached_group())
                     case "group", "select", *group_title:
                         App.group_select(" ".join(group_title))
 
@@ -167,7 +167,7 @@ class App:
 
                     # Notes navigation commands
                     case "notes", :
-                        view.print_table_with_pointer("Notes", database.select_grouped_notes(),
+                        view.print_table_with_pointer("Notes", database.get_grouped_notes(),
                                                       note.title if (note := App.get_attached_note()) else "")
 
                     case "note", "select", *note_title:
@@ -379,7 +379,7 @@ if __name__ == "__main__":
 
     # Launching errors handling
     try:
-        database = JsonDB()
+        database = DataBaseJsonImp()
         database.load_json()
     except JsonLoadingError:
         view.print_error_message(f"\nCan't find .json file in {JSON_PATH}")

@@ -8,26 +8,26 @@ from abc import ABC, abstractmethod
 from .json_impl.json_view import Note, Group, Groups
 
 
-class IDataBase(ABC):
+class DataBase(ABC):
 
     @staticmethod
     @abstractmethod
-    def attached_group_notes(group_name: str) -> list[str]:
+    def get_attached_group_notes(group_name: str) -> list[str]:
         pass
 
     @staticmethod
     @abstractmethod
-    def select_grouped_notes() -> list[str]:
+    def get_grouped_notes() -> list[str]:
         pass
 
     @staticmethod
     @abstractmethod
-    def select_all_groups() -> list[str]:
+    def get_all_groups() -> list[str]:
         pass
 
     @staticmethod
     @abstractmethod
-    def select_all_notes() -> list[str]:
+    def get_all_notes() -> list[str]:
         pass
 
     @staticmethod
