@@ -18,7 +18,7 @@ from custom_input import CustomInput
 from databases.json_impl.json_view import Note
 from databases.json_impl.config import JSON_PATH
 from settings.commands import MAIN_COMMANDS, GROUPS_COMMANDS, NOTES_COMMANDS
-from settings.colors import TEXT_COLOR, ERROR_COLOR, STATUS_COLOR
+from settings.colors import TEXT_COLOR, STATUS_COLOR
 from settings.config import LINE_SYMBOL
 
 from exceptions.json_errors import *
@@ -131,28 +131,29 @@ class App:
         view.print_text("\nWelcome to MyNotes!\nEnter 'help' option to show context menu")
         while True:
             try:
-                view.note_group_attached(App.get_attached_group(), App.get_attached_note())
+                view.print_attached_group_and_note(App.get_attached_group(), App.get_attached_note())
                 command = input_handler.command_input(database.select_all_groups(),
                                                       database.attached_group_notes(App.get_attached_group()))
                 match command.split():
 
                     # Main menu commands
                     case "help", :
-                        view.menu_view("Main commands:", MAIN_COMMANDS["commands"], MAIN_COMMANDS["descriptions"])
+                        view.print_table("Main commands:", MAIN_COMMANDS["commands"], MAIN_COMMANDS["descriptions"])
                     case "cls", :
                         os.system('cls' if os.name == 'nt' else 'clear')
                     case "help", "groups":
-                        view.menu_view("Groups commands:", GROUPS_COMMANDS["commands"], GROUPS_COMMANDS["descriptions"])
+                        view.print_table("Groups commands:", GROUPS_COMMANDS["commands"],
+                                         GROUPS_COMMANDS["descriptions"])
                     case "help", "notes":
-                        view.menu_view("Notes commands:", NOTES_COMMANDS["commands"], NOTES_COMMANDS["descriptions"])
+                        view.print_table("Notes commands:", NOTES_COMMANDS["commands"], NOTES_COMMANDS["descriptions"])
                     case "quit", :
                         return 0
 
                     # Groups navigation commands
                     case "groups", :
-                        view.list_view("Groups", database.select_all_groups(), App.get_attached_group())
+                        view.print_table_with_pointer("Groups", database.select_all_groups(), App.get_attached_group())
                     case "group", "select", *group_title:
-                        App.select_group(" ".join(group_title))
+                        App.group_select(" ".join(group_title))
 
                     # Groups editing commands
                     case "group", "create", *group_title:
@@ -166,11 +167,11 @@ class App:
 
                     # Notes navigation commands
                     case "notes", :
-                        view.list_view("Notes", database.select_grouped_notes(),
-                                       note.title if (note := App.get_attached_note()) else "")
+                        view.print_table_with_pointer("Notes", database.select_grouped_notes(),
+                                                      note.title if (note := App.get_attached_note()) else "")
 
                     case "note", "select", *note_title:
-                        App.select_note(" ".join(note_title))
+                        App.note_select(" ".join(note_title))
 
                     case "note", "read":
                         App.note_read()
@@ -224,7 +225,7 @@ class App:
     @staticmethod
     @_empty_title
     @_wrong_group_title
-    def select_group(group_title) -> None:
+    def group_select(group_title) -> None:
         App.__set_attached_group(group_title)
         App.__set_attached_note(None)
 
@@ -260,13 +261,13 @@ class App:
     @_empty_title
     @_group_not_selected
     @_wrong_note_title
-    def select_note(note_title: str) -> None:
+    def note_select(note_title: str) -> None:
         App.__set_attached_note(database.check_note(note_title))
 
     @staticmethod
     @_note_not_selected
     def note_read(note: Note) -> None:
-        view.note_view(note.title, note.text)
+        view.print_note(note.title, note.text)
 
     @staticmethod
     @_note_not_selected
@@ -288,7 +289,7 @@ class App:
     def note_create(note_title) -> str:
         note_text = input_handler.text_editor()
         database.create_note(App.get_attached_group(), note_title, note_text)
-        App.select_note(note_title)
+        App.note_select(note_title)
         return f"Note: '{note_title}' was successfully created!"
 
     @staticmethod

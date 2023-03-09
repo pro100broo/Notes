@@ -18,7 +18,7 @@ class View:
     __table.padding_width = 1
 
     @staticmethod
-    def _print_table(function):
+    def _print_and_clear(function):
         """
         Decorator for printing the tables:
         1. Calls function changing the presentation of the :class:`View` table
@@ -68,7 +68,7 @@ class View:
         )
 
     @staticmethod
-    def note_group_attached(group: str, note: Note) -> None:
+    def print_attached_group_and_note(group: str, note: Note) -> None:
         """
         :param group: Name of attached group
         :param note: Attached Note object
@@ -87,14 +87,14 @@ class View:
             print(GROUP_COLOR + "\nNote's group doesn't selected")
 
     @staticmethod
-    @_print_table
-    def note_view(title: str, text: str) -> None:
+    @_print_and_clear
+    def print_note(title: str, text: str) -> None:
         """ A simple one-column table includes two rows: note title and text """
         View.__table.add_column(title, [text.rstrip()])
 
     @staticmethod
-    @_print_table
-    def menu_view(_: str, commands: list[str], descriptions: list[str]) -> None:
+    @_print_and_clear
+    def print_table(_: str, commands: list[str], descriptions: list[str]) -> None:
         """ The two-column table includes the names and descriptions of the commands """
         View.__table.field_names = [" Command", "Description"]
         for command, description in zip([GROUP_COLOR + row + TEXT_COLOR if row.isupper() else row for row in commands],
@@ -102,8 +102,8 @@ class View:
             View.__table.add_row((command, description))
 
     @staticmethod
-    @_print_table
-    def list_view(title: str, text: list[str], pointer: str) -> None:
+    @_print_and_clear
+    def print_table_with_pointer(title: str, text: list[str], pointer: str) -> None:
         """
         :param title: The name of the table (if exists)
         :param text: The list of the titles
