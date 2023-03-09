@@ -77,7 +77,7 @@ class App:
     def _wrong_note_title(function):
         """ Validation of the uncorrected note title.Additionally, an empty group is checked """
         def wrapper(note_title):
-            if not database.attached_group_notes(group_title := App.get_attached_group()):
+            if not database.select_attached_group_notes(group_title := App.get_attached_group()):
                 view.print_error_message(f"Group: '{group_title}' is empty")
             elif not (database.check_note(note_title)):
                 view.print_error_message(f"Note title: '{note_title}' doesn't exists")
@@ -133,7 +133,7 @@ class App:
             try:
                 view.print_attached_group_and_note(App.get_attached_group(), App.get_attached_note())
                 command = input_handler.command_input(database.select_all_groups(),
-                                                      database.attached_group_notes(App.get_attached_group()))
+                                                      database.select_attached_group_notes(App.get_attached_group()))
                 match command.split():
 
                     # Main menu commands

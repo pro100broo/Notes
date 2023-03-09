@@ -47,7 +47,7 @@ class CustomInput:
         CustomInput.__set_groups(groups)
         CustomInput.__set_notes(notes)
         return prompt_toolkit.prompt(LINE_SYMBOL,
-                                     completer=NestedCompleter.from_nested_dict(CustomInput.__get_hints_dict()))
+                                     completer=NestedCompleter.from_nested_dict(CustomInput.__autocompletion_keys()))
 
     @staticmethod
     def text_editor(buffered_text="", multiline=True) -> str:
@@ -66,14 +66,14 @@ class CustomInput:
             prompt_continuation=LINE_SYMBOL,
             clipboard=CustomInput.clipboard,
             multiline=multiline,
-            bottom_toolbar=CustomInput.__get_toolbar(multiline) if TOOLBAR else False,
+            bottom_toolbar=CustomInput.__toolbar(multiline) if TOOLBAR else False,
             rprompt='100 character per string limit!' if multiline else '30 character limit!',
             default=buffered_text
         )
         return "\n".join([row[:100] for row in text.split("\n")]) if multiline else text[:30]
 
     @staticmethod
-    def __get_toolbar(multiline: bool) -> str:
+    def __toolbar(multiline: bool) -> str:
         """
         :param multiline: bool
         :return: Bottom toolbar text of the text editor. Editor 'exit' hotkey depends on the multiline parameter
@@ -86,7 +86,7 @@ class CustomInput:
                f"\n[ctrl + c] -> exit without changes (temporary crutch)"
 
     @staticmethod
-    def __get_hints_dict() -> dict:
+    def __autocompletion_keys() -> dict:
         """
         :return: Dictionary with autocompletion tips. Notes and group titles change after corresponding database changes
 

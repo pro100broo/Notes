@@ -78,7 +78,7 @@ class JsonDB(IDataBase):
         return JsonDB.__notes
 
     @staticmethod
-    def attached_group_notes(group_name: str) -> list[str]:
+    def select_attached_group_notes(group_name: str) -> list[str]:
         """
         :return: List of notes of attached group for the autocompletion
         :return: An empty list if the attached group is empty
