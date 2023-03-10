@@ -22,7 +22,6 @@ class DataBaseJsonImp(DataBase):
 
     @staticmethod
     def _change_groups_list(function):
-        """ Decorator for accessing the list of groups """
         def wrapper(*args):
             notes = DataBaseJsonImp.__get_notes()
             DataBaseJsonImp.__set_notes(function(notes, *args))
@@ -31,8 +30,7 @@ class DataBaseJsonImp(DataBase):
         return wrapper
 
     @staticmethod
-    def _change_notes_list(function):
-        """ Decorator for finding and changing a group """
+    def _change_group(function):
         def wrapper(*args):
             notes = DataBaseJsonImp.__get_notes()
             for index, group in enumerate(notes.groups_list):
@@ -47,7 +45,6 @@ class DataBaseJsonImp(DataBase):
     # loads notes data in list from the .json file
     @staticmethod
     def load_json() -> None:
-        """ Loads json dictionary in the program from .json file """
         try:
             with open(JSON_PATH, "r") as file:
                 # If .json file is empty, the following exception raises
@@ -62,7 +59,6 @@ class DataBaseJsonImp(DataBase):
     # saves notes data in the .json file
     @staticmethod
     def __dump_json() -> None:
-        """ Dumps json dictionary from the program to the .json file """
         try:
             with open(JSON_PATH, "w") as file:
                 file.write(DataBaseJsonImp.__get_notes().json())
@@ -91,18 +87,18 @@ class DataBaseJsonImp(DataBase):
     @staticmethod
     def get_grouped_notes() -> list[str]:
         """
-        :return: List of notes divided into groups.
-
         Cosmetic method.
         Group names are highlighted.
         Empty groups are highlighted too.
+
+        :return: List of notes divided into groups.
         """
         column = []
         for group in DataBaseJsonImp.__get_notes().groups_list:
             # Painting group name
             column.append(f"{GROUP_COLOR}Group: {group.name}{TEXT_COLOR}")
             # if group is empty
-            if not DataBaseJsonImp.select_attached_group_notes(group.name):
+            if not DataBaseJsonImp.get_attached_group_notes(group.name):
                 column.append(ERROR_COLOR + "empty group" + TEXT_COLOR)
             else:
                 for note in group.notes_list:
@@ -126,7 +122,6 @@ class DataBaseJsonImp(DataBase):
 
     @staticmethod
     def check_group(group_name: str) -> int:
-        """ Check existence of the group in database """
         for group in DataBaseJsonImp.__get_notes().groups_list:
             if group.name == group_name:
                 return 1
@@ -134,7 +129,6 @@ class DataBaseJsonImp(DataBase):
 
     @staticmethod
     def check_note(note_name: str) -> Note | int:
-        """ Check existence of the note in database """
         for group in DataBaseJsonImp.__get_notes().groups_list:
             for note in group.notes_list:
                 if note.title == note_name:
@@ -156,16 +150,16 @@ class DataBaseJsonImp(DataBase):
                 return notes
 
     @staticmethod
-    @_change_notes_list
+    @_change_group
     def rename_group(group: Group, _: str, new_group_name: str) -> Group:
         group.name = new_group_name
         return group
 
     @staticmethod
-    @_change_notes_list
+    @_change_group
     def create_note(group: Group, group_name: str, title: str, text: str) -> Group:
         group.notes_list.append(Note(
-            note_id=len(DataBaseJsonImp.select_attached_group_notes(group_name)),
+            note_id=len(DataBaseJsonImp.get_attached_group_notes(group_name)),
             creation_date=datetime.now(),
             last_change_date=datetime.now(),
             title=title,
@@ -174,11 +168,12 @@ class DataBaseJsonImp(DataBase):
         return group
 
     @staticmethod
-    @_change_notes_list
+    @_change_group
     def update_note(group: Group, _: str, note_id: int, text: str, option: str) -> Group:
         """
+        Method changes note 'title' or 'text' according the option
+
         :param option: 'title' or 'text'
-        Change note title or text according the option
         """
         if option == "title":
             group.notes_list[note_id].title = text
@@ -188,7 +183,7 @@ class DataBaseJsonImp(DataBase):
         return group
 
     @staticmethod
-    @_change_notes_list
+    @_change_group
     def delete_note(group: Group, _: str, note_id: int) -> Group:
         group.notes_list.pop(note_id)
         return group

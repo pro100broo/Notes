@@ -40,7 +40,6 @@ class App:
 
     @staticmethod
     def _delete_confirmation(function):
-        """ Decorator is called before deleting note or group of notes """
         def wrapper(title):
             view.print_error_message(f"\nAre you sure to delete this [Y/N]?{TEXT_COLOR}")
             suggestion = input(LINE_SYMBOL).lower()
@@ -52,7 +51,6 @@ class App:
 
     @staticmethod
     def _empty_title(function):
-        """ Validation of the empty note or group title """
         def wrapper(title):
             if not title:
                 view.print_error_message("Title shouldn't be empty")
@@ -62,7 +60,6 @@ class App:
 
     @staticmethod
     def _wrong_group_title(function):
-        """ Validation of the uncorrected group of notes title """
         def wrapper(*args):
             """
             :param args: args[0] -> The name of the group
@@ -75,7 +72,6 @@ class App:
 
     @staticmethod
     def _wrong_note_title(function):
-        """ Validation of the uncorrected note title.Additionally, an empty group is checked """
         def wrapper(note_title):
             if not database.get_attached_group_notes(group_title := App.get_attached_group()):
                 view.print_error_message(f"Group: '{group_title}' is empty")
@@ -87,7 +83,6 @@ class App:
 
     @staticmethod
     def _group_title_duplication(function):
-        """Duplicate group of notes title validation"""
         def wrapper(group_title):
             if not database.check_group(group_title):
                 function(group_title)
@@ -97,7 +92,6 @@ class App:
 
     @staticmethod
     def _note_title_duplication(function):
-        """ Duplicate note title validation """
         def wrapper(note_title):
             if not database.check_note(note_title):
                 function(note_title)
@@ -107,7 +101,6 @@ class App:
 
     @staticmethod
     def _group_not_selected(function):
-        """ Check if group of note is attached """
         def wrapper(title):
             if App.get_attached_group():
                 function(title)
@@ -117,7 +110,6 @@ class App:
 
     @staticmethod
     def _note_not_selected(function):
-        """ Check if group of note is attached  """
         def wrapper(*args):
             """ This decorator calls the following function with 'Note' type object instead of 'str' type """
             if note := App.get_attached_note():

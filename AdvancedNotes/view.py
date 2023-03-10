@@ -42,22 +42,18 @@ class View:
 
     @staticmethod
     def print_status_message(message_text: str) -> None:
-        """ Prints event status """
         print(STATUS_COLOR + message_text)
 
     @staticmethod
     def print_error_message(message_text: str) -> None:
-        """ Prints error message """
         print(ERROR_COLOR + message_text)
 
     @staticmethod
     def print_text(message_text: str) -> None:
-        """ Prints plain text"""
         print(TEXT_COLOR + message_text)
 
     @staticmethod
     def print_note_info(note: Note) -> None:
-        """ Method prints some note info if 'note info' option was selected """
         number_of_strings = note.text.count("\n") + 1
         print(
             f"\n{GROUP_COLOR}Note:{TEXT_COLOR} '{note.title}'"
@@ -68,20 +64,14 @@ class View:
         )
 
     @staticmethod
-    def print_attached_group_and_note(group: str, note: Note) -> None:
-        """
-        :param group: Name of attached group
-        :param note: Attached Note object
-
-        Method prints information about attached note and group
-        """
-        if group and note:
+    def print_attached_group_and_note(attached_group_name: str, attached_note: Note) -> None:
+        if attached_group_name and attached_note:
             # if group of notes and note are attached
-            print(TEXT_COLOR + f"\nAttached group: {GROUP_COLOR + group}" +
-                  TEXT_COLOR + f" Attached note: {GROUP_COLOR + note.title}")
-        elif group:
+            print(TEXT_COLOR + f"\nAttached group: {GROUP_COLOR + attached_group_name}" +
+                  TEXT_COLOR + f" Attached note: {GROUP_COLOR + attached_note.title}")
+        elif attached_group_name:
             # if group of notes is attached
-            print(TEXT_COLOR + f"\nAttached group: {GROUP_COLOR + group}")
+            print(TEXT_COLOR + f"\nAttached group: {GROUP_COLOR + attached_group_name}")
         else:
             # if nothing is attached
             print(GROUP_COLOR + "\nNote's group doesn't selected")
@@ -105,12 +95,12 @@ class View:
     @_print_and_clear
     def print_table_with_pointer(title: str, text: list[str], pointer: str) -> None:
         """
+        The two-column table includes column with titles and column with an arrow title pointer.
+        Pointer arrow appears when it's positions is the same as the attached group/note
+
         :param title: The name of the table (if exists)
         :param text: The list of the titles
         :param pointer: The name of the attached note or group of notes
-
-        The two-column table includes column with titles and column with an arrow title pointer.
-        Pointer arrow appears when it's positions is the same as the attached group/note
         """
         View.__table.add_column(title, text)
         View.__table.add_column(

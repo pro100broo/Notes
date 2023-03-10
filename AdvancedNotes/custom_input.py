@@ -4,6 +4,7 @@ Includes realization of text editor and commands auto-completion
 """
 
 import prompt_toolkit
+from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.completion import NestedCompleter
 from prompt_toolkit.clipboard.pyperclip import PyperclipClipboard
 
@@ -39,9 +40,9 @@ class CustomInput:
     @staticmethod
     def command_input(groups: list[str], notes: list[str]) -> str:
         """
-        Method for input commands with autocompletion
-        :param groups: The list of the groups from the database
-        :param notes: The list of the attached group notes
+        :param groups: List of the groups from the database
+        :param notes: List of the attached group notes
+
         :return: text of user's command
         """
         CustomInput.__set_groups(groups)
@@ -54,11 +55,11 @@ class CustomInput:
         """
         :param buffered_text: title/text of the attached note or title of the attached group of notes, default: ""
         :param multiline: bool (True for the note text input, False for the note/group of notes title input)
+
         :return: trimmed user's text
 
         When launching text editor, buffered_text will be automatically inserted the buffer of text editor and
         system clipboard
-
         """
         CustomInput.clipboard.set_text(buffered_text)
         text = prompt_toolkit.prompt(
@@ -76,6 +77,7 @@ class CustomInput:
     def __toolbar(multiline: bool) -> str:
         """
         :param multiline: bool
+
         :return: Bottom toolbar text of the text editor. Editor 'exit' hotkey depends on the multiline parameter
 
         Can be disabled with the 'TOOLBAR' constant
