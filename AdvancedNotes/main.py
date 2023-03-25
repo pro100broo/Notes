@@ -13,7 +13,7 @@ import pyperclip
 from prompt_toolkit.clipboard.pyperclip import PyperclipClipboard
 
 from view import View
-from json_db import DataBaseJsonImp
+from databases.json_db import DataBaseJsonImp
 from custom_input import CustomInput
 from databases.json_impl.json_view import Note
 from databases.json_impl.config import JSON_PATH

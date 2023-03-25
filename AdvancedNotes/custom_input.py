@@ -4,7 +4,6 @@ Includes realization of text editor and commands auto-completion
 """
 
 import prompt_toolkit
-from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.completion import NestedCompleter
 from prompt_toolkit.clipboard.pyperclip import PyperclipClipboard
 
@@ -83,9 +82,9 @@ class CustomInput:
         Can be disabled with the 'TOOLBAR' constant
         """
         return f"Text editor supports Emacs hot keys:" \
-               f"\n[ctrl + w] -> cut   [alt + w] -> copy   [ctrl + y] -> paste   " \
-               f"{'[esc + enter]' if multiline else '[enter]'} -> end input" \
-               f"\n[ctrl + c] -> exit without changes (temporary crutch)"
+               f"\n[ctrl + w] -> cut   [alt + w] -> copy   [ctrl + y] -> paste   [ctrl + shift + '-'] -> undo command" \
+               f"\n[ctrl + c] -> exit without changes (temporary crutch)   " \
+               f"{'[esc + enter]' if multiline else '[enter]'} -> end input"
 
     @staticmethod
     def __autocompletion_keys() -> dict:
@@ -112,7 +111,7 @@ class CustomInput:
                 "note": {
                     "read": None,
                     "info": None,
-                    "delete": None,
+                    "delete": CustomInput.__get_notes(),
                     "copy": None,
                     "create": None,
                     "edit": {
