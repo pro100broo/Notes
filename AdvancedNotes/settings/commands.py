@@ -31,8 +31,8 @@ GROUPS_COMMANDS = {
         "",
         " EDITING COMMANDS:",
         " group create 'new_group_name'",
-        " group rename 'group_name'",
-        " group delete 'group_name'"
+        " group delete 'group_name'",
+        " group edit title 'group_name'"
     ],
     "descriptions": [
         "",

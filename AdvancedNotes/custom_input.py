@@ -104,9 +104,11 @@ class CustomInput:
                 "notes": None,
                 "group": {
                     "create": None,
-                    "rename": CustomInput.__get_groups(),
                     "delete": CustomInput.__get_groups(),
                     "select": CustomInput.__get_groups(),
+                    "edit": {
+                        "title": None
+                    }
                 },
                 "note": {
                     "read": None,

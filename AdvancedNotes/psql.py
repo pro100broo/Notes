@@ -5,7 +5,6 @@ from databases.idatabase import DataBase
 from databases.note import Note
 from settings.colors import GROUP_COLOR, TEXT_COLOR, ERROR_COLOR
 
-
 class DataBasePSQLImp(DataBase):
     connection = None
 
@@ -23,10 +22,12 @@ class DataBasePSQLImp(DataBase):
                         "ALTER TABLE groups_notes ADD CONSTRAINT groups_notes_group_id_fkey FOREIGN KEY (group_id) "
                         "REFERENCES groups(id)"
                     )
+
                     cursor.execute(
                         "ALTER TABLE groups_notes ADD CONSTRAINT groups_notes_note_id_fkey FOREIGN KEY (note_id) "
                         "REFERENCES notes(id)"
                     )
+
                 except Exception as error:
                     DataBasePSQLImp.connection.rollback()
                     view.print_error_message(str(error))
@@ -92,20 +93,20 @@ class DataBasePSQLImp(DataBase):
     @_make_transaction
     def check_group(group_title: str, cursor) -> int | None:
         cursor.execute(f"select COUNT(*) from groups WHERE id='{group_title}'")
-        if cursor.fetchall()[0]:
+        if cursor.fetchall()[0][0]:
             return 1
 
     @staticmethod
     @_make_transaction
     def check_note(note_title: str, cursor) -> Note | None:
         cursor.execute(f"select id, text, creation_date, last_change_date from notes WHERE title='{note_title}'")
-        if note_data := cursor.fetchall()[0]:
+        if note_data := cursor.fetchall():
             return Note(
-                note_id=note_data[0],
+                note_id=note_data[0][0],
                 title=note_title,
-                text=note_data[1],
-                creation_date=note_data[2],
-                last_change_date=note_data[3]
+                text=note_data[0][1],
+                creation_date=note_data[0][2],
+                last_change_date=note_data[0][3]
             )
 
     @staticmethod
@@ -146,10 +147,15 @@ class DataBasePSQLImp(DataBase):
 
     @staticmethod
     @_make_transaction
+    @_update_foreign_keys
     def update_note(note_title: int, text: str, option: str, cursor) -> None:
-        cursor.execute(
-            f"UPDATE notes SET {'title' if option == 'title' else 'text'}=%s WHERE title=%s", (text, note_title)
-        )
+        if option == "title":
+            cursor.execute(f"UPDATE notes SET id=%s, title=%s WHERE title=%s", (text, text, note_title))
+            cursor.execute(f"UPDATE groups_notes SET note_id=%s WHERE note_id=%s", (text, note_title))
+            DataBasePSQLImp.connection.commit()
+        else:
+            cursor.execute(f"UPDATE notes SET text=%s WHERE title=%s", (text, note_title))
+
 
     @staticmethod
     @_make_transaction

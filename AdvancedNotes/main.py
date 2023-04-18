@@ -14,7 +14,7 @@ import psycopg2
 from prompt_toolkit.clipboard.pyperclip import PyperclipClipboard
 
 from view import View
-from psql_db import DataBasePSQLImp
+from psql import DataBasePSQLImp
 from custom_input import CustomInput
 
 from databases.note import Note
@@ -32,10 +32,10 @@ class App:
     @staticmethod
     def _screen_cleaner(function):
         """ Cosmetic decorator. Cleans app screen before and after using a text editor """
-        def wrapper(title):
+        def wrapper(*args):
             os.system('cls' if os.name == 'nt' else 'clear')
-            if status_message := function(title):
-                os.system('cls' if os.name == 'nt' else 'clear')
+            if status_message := function(*args):
+                # os.system('cls' if os.name == 'nt' else 'clear')
                 view.print_status_message(status_message)
         return wrapper
 
@@ -85,19 +85,33 @@ class App:
     @staticmethod
     def _group_title_duplication(function):
         def wrapper(group_title):
-            if not database.check_group(group_title):
-                function(group_title)
-            else:
+            if database.check_group(group_title):
                 view.print_error_message(f"Group title: '{group_title}' already exists")
+            else:
+                function(group_title)
         return wrapper
 
     @staticmethod
     def _note_title_duplication(function):
         def wrapper(note_title):
+
             if not database.check_note(note_title):
                 function(note_title)
             else:
                 view.print_error_message(f"Note title: '{note_title}' already exists")
+        return wrapper
+
+    @staticmethod
+    def _title_input(function):
+        def wrapper():
+            os.system('cls' if os.name == 'nt' else 'clear')
+            if not (new_title := input_handler.text_editor(buffered_text=App.get_attached_group(),
+                                                           multiline=False)):
+                os.system('cls' if os.name == 'nt' else 'clear')
+                view.print_error_message("title shouldn't be empty")
+            else:
+                function(new_title)
+
         return wrapper
 
     @staticmethod
@@ -111,12 +125,18 @@ class App:
 
     @staticmethod
     def _note_not_selected(function):
-        def wrapper(*args):
-            """ This decorator calls the following function with 'Note' type object instead of 'str' type """
-            if note := App.get_attached_note():
-                function(*args, note) if args else function(note)
+        def wrapper():
+            if App.get_attached_note():
+                function()
             else:
                 view.print_error_message(f"Note doesn't selected")
+        return wrapper
+
+    @staticmethod
+    def _get_note(function):
+        def wrapper(*args):
+            return function(*args, App.get_attached_note())
+
         return wrapper
 
     @staticmethod
@@ -152,8 +172,8 @@ class App:
                     case "group", "create", *group_title:
                         App.group_create(" ".join(group_title))
 
-                    case "group", "rename", *group_title:
-                        App.group_edit_title(" ".join(group_title))
+                    case "group", "edit", "title":
+                        App.group_edit_title()
 
                     case "group", "delete", *group_title:
                         App.group_delete(" ".join(group_title))
@@ -227,14 +247,14 @@ class App:
         view.print_status_message(f"\nNew group: {group_title} was successfully created")
 
     @staticmethod
-    @_empty_title
-    @_wrong_group_title
+    @_title_input
+    @_group_not_selected
+    @_group_title_duplication
     @_screen_cleaner
-    def group_edit_title(group_title: str) -> str:
-        if new_group_title := App.title_input(group_title):
-            database.update_group(group_title, new_group_title)
-            App.__set_attached_group(new_group_title)
-            return f"\nGroup title was successfully changed: {group_title} -> {new_group_title}"
+    def group_edit_title(new_group_title: str) -> str:
+        database.update_group(App.get_attached_group(), new_group_title)
+        App.__set_attached_group(new_group_title)
+        return f"\nGroup title was successfully changed to '{new_group_title}'"
 
     @staticmethod
     @_empty_title
@@ -254,16 +274,19 @@ class App:
 
     @staticmethod
     @_note_not_selected
+    @_get_note
     def note_read(note: Note) -> None:
         view.print_note(note.title, note.text)
 
     @staticmethod
     @_note_not_selected
+    @_get_note
     def note_info(note: Note) -> None:
         view.print_note_info(note)
 
     @staticmethod
     @_note_not_selected
+    @_get_note
     def note_copy(note: Note) -> None:
         """ Copies text of the attached note in the system clipboard """
         view.print_text(f"\n{STATUS_COLOR}Note's text was copied in the global clipboard!!!")
@@ -282,6 +305,7 @@ class App:
 
     @staticmethod
     @_note_not_selected
+    @_get_note
     @_screen_cleaner
     def note_edit_text(note: Note) -> str:
         new_text = input_handler.text_editor(buffered_text=note.text)
@@ -290,11 +314,14 @@ class App:
 
     @staticmethod
     @_note_not_selected
+    @_title_input
+    @_note_title_duplication
+    @_get_note
     @_screen_cleaner
-    def note_edit_title(note: Note) -> str:
-        if new_note_title := App.title_input(note.title):
-            database.update_note(note.note_id, new_note_title, "title")
-            return "Note title was successfully changed!"
+    def note_edit_title(new_note_title: str, note: Note) -> str:
+        database.update_note(note.note_id, new_note_title, "title")
+        App.__set_attached_note(database.check_note(new_note_title))
+        return "Note title was successfully changed!"
 
     @staticmethod
     @_note_not_selected
@@ -303,15 +330,6 @@ class App:
         database.delete_note(note.note_id)
         App.__set_attached_note(None)
         view.print_status_message(f"Note: '{note.title}' was successfully deleted!")
-
-    @staticmethod
-    def title_input(title: str) -> str:
-        """ Method for validation note or group of notes title input """
-        if not (new_title := input_handler.text_editor(buffered_text=title, multiline=False)):
-            os.system('cls' if os.name == 'nt' else 'clear')
-            view.print_error_message("title shouldn't be empty")
-        else:
-            return new_title
 
 
 if __name__ == "__main__":
