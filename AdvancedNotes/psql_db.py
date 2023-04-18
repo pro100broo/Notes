@@ -1,21 +1,18 @@
-import psycopg2
-import os
-
 from datetime import datetime
 
 from view import View
 from databases.idatabase import DataBase
-from databases.json_impl.json_view import Note
-from settings.config import HOST, PORT, USER, PASSWORD
+from databases.note import Note
 from settings.colors import GROUP_COLOR, TEXT_COLOR, ERROR_COLOR
 
 
 class DataBasePSQLImp(DataBase):
+    connection = None
 
     @staticmethod
     def _update_foreign_keys(function):
         def wrapper(*args):
-            with connection.cursor() as cursor:
+            with DataBasePSQLImp.connection.cursor() as cursor:
                 try:
                     cursor.execute("ALTER TABLE groups_notes DROP CONSTRAINT groups_notes_group_id_fkey")
                     cursor.execute("ALTER TABLE groups_notes DROP CONSTRAINT groups_notes_note_id_fkey")
@@ -31,7 +28,7 @@ class DataBasePSQLImp(DataBase):
                         "REFERENCES notes(id)"
                     )
                 except Exception as error:
-                    connection.rollback()
+                    DataBasePSQLImp.connection.rollback()
                     view.print_error_message(str(error))
 
         return wrapper
@@ -39,14 +36,14 @@ class DataBasePSQLImp(DataBase):
     @staticmethod
     def _make_transaction(function):
         def wrapper(*args):
-            with connection.cursor() as cursor:
+            with DataBasePSQLImp.connection.cursor() as cursor:
                 try:
                     result = function(*args, cursor)
                 except Exception as error:
-                    connection.rollback()
+                    DataBasePSQLImp.connection.rollback()
                     view.print_error_message(str(error))
                 else:
-                    connection.commit()
+                    DataBasePSQLImp.connection.commit()
                     return result
         return wrapper
 
@@ -66,6 +63,10 @@ class DataBasePSQLImp(DataBase):
         return column[:-1]
 
     @staticmethod
+    def set_connection(connection) -> None:
+        DataBasePSQLImp.connection = connection
+
+    @staticmethod
     @_make_transaction
     def get_attached_group_notes(group_title: str, cursor) -> list[str]:
         cursor.execute(
@@ -78,44 +79,33 @@ class DataBasePSQLImp(DataBase):
     @staticmethod
     @_make_transaction
     def get_all_groups(cursor) -> list[str]:
-        cursor.execute(
-            "select title FROM groups"
-        )
-
+        cursor.execute("select title FROM groups")
         return [title[0] for title in cursor.fetchall()]
 
     @staticmethod
     @_make_transaction
     def get_all_notes(cursor) -> list[str]:
-        cursor.execute(
-            "select title FROM notes"
-        )
-
+        cursor.execute("select title FROM notes")
         return [title[0] for title in cursor.fetchall()]
 
     @staticmethod
     @_make_transaction
     def check_group(group_title: str, cursor) -> int | None:
-        cursor.execute(
-            f"select COUNT(*) from groups WHERE id='{group_title}'"
-        )
+        cursor.execute(f"select COUNT(*) from groups WHERE id='{group_title}'")
         if cursor.fetchall()[0]:
             return 1
 
     @staticmethod
     @_make_transaction
     def check_note(note_title: str, cursor) -> Note | None:
-        cursor.execute(
-            f"select id, text, creation_date, last_change_date from notes WHERE title='{note_title}'"
-        )
+        cursor.execute(f"select id, text, creation_date, last_change_date from notes WHERE title='{note_title}'")
         if note_data := cursor.fetchall()[0]:
-            note_id, text, creation_date, last_change_date = note_data
             return Note(
-                note_id=note_id,
+                note_id=note_data[0],
                 title=note_title,
-                text=text,
-                creation_date=creation_date,
-                last_change_date=last_change_date
+                text=note_data[1],
+                creation_date=note_data[2],
+                last_change_date=note_data[3]
             )
 
     @staticmethod
@@ -141,12 +131,8 @@ class DataBasePSQLImp(DataBase):
         cursor.execute(
             f"DELETE FROM notes WHERE id IN (SELECT note_id FROM groups_notes WHERE group_id='{group_title}')"
         )
-        cursor.execute(
-            f"DELETE FROM groups_notes WHERE group_id='{group_title}'"
-        )
-        cursor.execute(
-            f"DELETE FROM groups WHERE id='{group_title}'"
-        )
+        cursor.execute(f"DELETE FROM groups_notes WHERE group_id='{group_title}'")
+        cursor.execute(f"DELETE FROM groups WHERE id='{group_title}'")
 
     @staticmethod
     @_make_transaction
@@ -173,19 +159,3 @@ class DataBasePSQLImp(DataBase):
 
 
 view = View()
-# First connection attempt
-
-try:
-    connection = psycopg2.connect(
-        host=HOST,
-        port=PORT,
-        user=USER,
-        password=PASSWORD,
-        database="mynotes"
-    )
-except Exception as error_text:
-    view.print_error_message(str(error_text))
-else:
-    view.print_status_message(f"Successfully connected to PosgreSQL db 'mynotes' as user: {USER}")
-
-

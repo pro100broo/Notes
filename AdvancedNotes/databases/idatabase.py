@@ -4,7 +4,7 @@ I am planning to add a support of the PostgreSQL and MongoDB with a common inter
 """
 
 from abc import ABC, abstractmethod
-from .json_impl.json_view import Note
+from .note import Note
 
 
 class DataBase(ABC):

@@ -10,21 +10,19 @@ Navigation in autocompletion and text redactor with keyboard arrows.
 
 import os
 import pyperclip
+import psycopg2
 from prompt_toolkit.clipboard.pyperclip import PyperclipClipboard
 
 from view import View
-from json_db import DataBaseJsonImp
 from psql_db import DataBasePSQLImp
 from custom_input import CustomInput
-from databases.json_impl.json_view import Note
+
+from databases.note import Note
+from databases.psql_impl.config import HOST, PORT, USER, PASSWORD
+
 from settings.commands import MAIN_COMMANDS, GROUPS_COMMANDS, NOTES_COMMANDS
 from settings.colors import TEXT_COLOR, STATUS_COLOR
-from settings.config import LINE_SYMBOL, JSON_PATH
-
-from json_utills import create_json_file
-from json_utills import fill_empty_json_file
-
-from exceptions.json_errors import *
+from settings.config import LINE_SYMBOL
 
 
 class App:
@@ -122,13 +120,11 @@ class App:
         return wrapper
 
     @staticmethod
-    def main_loop() -> int:
+    def mainloop() -> int:
         view.print_text("\nWelcome to MyNotes!\nEnter 'help' option to show context menu")
         while True:
             try:
                 view.print_attached_group_and_note(App.get_attached_group(), App.get_attached_note())
-                print(database.get_all_groups())
-                print(database.get_attached_group_notes(App.get_attached_group()))
                 command = input_handler.command_input(database.get_all_groups(),
                                                       database.get_attached_group_notes(App.get_attached_group()))
                 match command.split():
@@ -195,11 +191,6 @@ class App:
                     case _:
                         view.print_error_message("Wrong command, try again")
 
-            # Exceptions catching
-            except JsonDumpingError:
-                view.print_error_message("Can't dump .json file")
-            except JsonReadingError:
-                view.print_error_message("Can't load .json file. Check it's integrity")
             except KeyboardInterrupt:
                 view.print_error_message("Ctrl+C hotkey was intercepted. Use 'quit' option to close the program!")
 
@@ -294,7 +285,7 @@ class App:
     @_screen_cleaner
     def note_edit_text(note: Note) -> str:
         new_text = input_handler.text_editor(buffered_text=note.text)
-        database.update_note(App.get_attached_group(), note.note_id, new_text, "text")
+        database.update_note(note.note_id, new_text, "text")
         return "Note text was successfully changed!"
 
     @staticmethod
@@ -302,14 +293,14 @@ class App:
     @_screen_cleaner
     def note_edit_title(note: Note) -> str:
         if new_note_title := App.title_input(note.title):
-            database.update_note(App.get_attached_group(), note.note_id, new_note_title, "title")
+            database.update_note(note.note_id, new_note_title, "title")
             return "Note title was successfully changed!"
 
     @staticmethod
     @_note_not_selected
     @_delete_confirmation
     def note_delete(note: Note) -> None:
-        database.delete_note(App.get_attached_group(), note.note_id)
+        database.delete_note(note.note_id)
         App.__set_attached_note(None)
         view.print_status_message(f"Note: '{note.title}' was successfully deleted!")
 
@@ -329,18 +320,19 @@ if __name__ == "__main__":
     app_buffer = PyperclipClipboard()
     App()
 
-    database = DataBasePSQLImp()
-    App.main_loop()
-    # Launching errors handling
-    """try:
-        database = DataBaseJsonImp()
-        database.load_json()
-    except JsonLoadingError:
-        view.print_error_message(f"\nCan't find .json file in {JSON_PATH}")
-        create_json_file()
-    except EmptyJsonFileError:
-        fill_empty_json_file()
-    except JsonReadingError:
-        view.print_error_message("Can't load .json file. Check it's integrity")
+    # First connection attempt
+    try:
+        connection = psycopg2.connect(
+            host=HOST,
+            port=PORT,
+            user=USER,
+            password=PASSWORD,
+            database="mynotes"
+        )
+    except Exception as error_text:
+        view.print_error_message(str(error_text))
     else:
-        App.main_loop()"""
+        database = DataBasePSQLImp()
+        database.set_connection(connection)
+        view.print_status_message(f"\nSuccessfully connected to PosgreSQL database 'mynotes' as user: {USER}")
+        App.mainloop()

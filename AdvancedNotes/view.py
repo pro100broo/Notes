@@ -5,7 +5,7 @@ Supports color syntax of errors, event statuses, plain text and table's text
 
 from prettytable import PrettyTable
 
-from databases.json_impl.json_view import Note
+from databases.note import Note
 from settings.colors import TEXT_COLOR, STATUS_COLOR, ERROR_COLOR, GROUP_COLOR
 from settings.config import HORIZONTAL_TABLE_CHAR, JUNCTION_TABLE_CHER
 
