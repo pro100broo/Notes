@@ -3,21 +3,19 @@ Database Abstract class
 I am planning to add a support of the PostgreSQL and MongoDB with a common interface
 """
 
-
 from abc import ABC, abstractmethod
-from .json_impl.json_view import Note, Group, Groups
+from .json_impl.json_view import Note
 
 
 class DataBase(ABC):
-
     @staticmethod
     @abstractmethod
-    def get_attached_group_notes(group_name: str) -> list[str]:
+    def get_grouped_notes() -> list[str]:
         pass
 
     @staticmethod
     @abstractmethod
-    def get_grouped_notes() -> list[str]:
+    def get_attached_group_notes(group_title: str) -> list[str]:
         pass
 
     @staticmethod
@@ -32,41 +30,41 @@ class DataBase(ABC):
 
     @staticmethod
     @abstractmethod
-    def check_group(group_name: str) -> int:
+    def check_group(group_title) -> int | None:
         pass
 
     @staticmethod
     @abstractmethod
-    def check_note(note_name: str) -> Note | int:
+    def check_note(note_title: str) -> Note | None:
         pass
 
     @staticmethod
     @abstractmethod
-    def create_group(notes: Groups, group_name: str) -> Groups:
+    def create_group(group_title: str) -> None:
         pass
 
     @staticmethod
     @abstractmethod
-    def delete_group(notes: Groups, group_name: str) -> Groups:
+    def update_group(new_group_title: str) -> None:
         pass
 
     @staticmethod
     @abstractmethod
-    def rename_group(group: Group, _: str, new_group_name: str) -> Group:
+    def delete_group(group_title: str) -> None:
         pass
 
     @staticmethod
     @abstractmethod
-    def create_note(group: Group, group_name: str, title: str, text: str) -> Group:
+    def create_note(group_title: str, note_title: str, note_text: str) -> None:
         pass
 
     @staticmethod
     @abstractmethod
-    def update_note(group: Group, _: str, note_id: int, text: str, option: str) -> Group:
+    def update_note(note_title: int, text: str, option: str) -> None:
         pass
 
     @staticmethod
     @abstractmethod
-    def delete_note(group: Group, _: str, note_id: int) -> Group:
+    def delete_note(note_title: int) -> None:
         pass
 

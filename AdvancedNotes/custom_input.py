@@ -26,11 +26,11 @@ class CustomInput:
 
     @staticmethod
     def __get_groups() -> dict[str: None]:
-        return {group_name[3:]: None for group_name in CustomInput.__groups}
+        return {group_name: None for group_name in CustomInput.__groups}
 
     @staticmethod
     def __set_notes(notes: list[str]) -> None:
-        CustomInput.__notes = notes
+        CustomInput.__notes = notes if notes else []
 
     @staticmethod
     def __get_notes() -> dict[str: None]:
@@ -111,7 +111,7 @@ class CustomInput:
                 "note": {
                     "read": None,
                     "info": None,
-                    "delete": CustomInput.__get_notes(),
+                    "delete": None,
                     "copy": None,
                     "create": None,
                     "edit": {

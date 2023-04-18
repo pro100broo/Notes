@@ -13,13 +13,16 @@ import pyperclip
 from prompt_toolkit.clipboard.pyperclip import PyperclipClipboard
 
 from view import View
-from databases.json_db import DataBaseJsonImp
+from json_db import DataBaseJsonImp
+from psql_db import DataBasePSQLImp
 from custom_input import CustomInput
 from databases.json_impl.json_view import Note
-from databases.json_impl.config import JSON_PATH
 from settings.commands import MAIN_COMMANDS, GROUPS_COMMANDS, NOTES_COMMANDS
 from settings.colors import TEXT_COLOR, STATUS_COLOR
-from settings.config import LINE_SYMBOL
+from settings.config import LINE_SYMBOL, JSON_PATH
+
+from json_utills import create_json_file
+from json_utills import fill_empty_json_file
 
 from exceptions.json_errors import *
 
@@ -124,6 +127,8 @@ class App:
         while True:
             try:
                 view.print_attached_group_and_note(App.get_attached_group(), App.get_attached_note())
+                print(database.get_all_groups())
+                print(database.get_attached_group_notes(App.get_attached_group()))
                 command = input_handler.command_input(database.get_all_groups(),
                                                       database.get_attached_group_notes(App.get_attached_group()))
                 match command.split():
@@ -152,7 +157,7 @@ class App:
                         App.group_create(" ".join(group_title))
 
                     case "group", "rename", *group_title:
-                        App.group_rename(" ".join(group_title))
+                        App.group_edit_title(" ".join(group_title))
 
                     case "group", "delete", *group_title:
                         App.group_delete(" ".join(group_title))
@@ -234,9 +239,9 @@ class App:
     @_empty_title
     @_wrong_group_title
     @_screen_cleaner
-    def group_rename(group_title: str) -> str:
+    def group_edit_title(group_title: str) -> str:
         if new_group_title := App.title_input(group_title):
-            database.rename_group(group_title, new_group_title)
+            database.update_group(group_title, new_group_title)
             App.__set_attached_group(new_group_title)
             return f"\nGroup title was successfully changed: {group_title} -> {new_group_title}"
 
@@ -317,51 +322,6 @@ class App:
         else:
             return new_title
 
-    @staticmethod
-    def create_json_file() -> None:
-        """
-        Method calls before the first launching of the app.
-        Automatically generates an empty .json file with basic content
-        """
-        view.print_text("\nProgram keeps data in the json format."
-                        "\nCould I create .json file in the chosen path [Y/N]?"
-                        "\nAttention! Existing .json file will be overwritten:")
-        action = input(LINE_SYMBOL).lower()
-        match action:
-            case "y":
-                try:
-                    with open(JSON_PATH, "w") as file:
-                        # Initialisation of the database view
-                        file.write('{"groups_list": [{"name": "Home", "notes_list": []}]}')
-                except PermissionError:
-                    view.print_error_message("Your operating system refused to create the file."
-                                             f"\nChange the settings or create an empty{STATUS_COLOR} mynotes.json"
-                                             f"{TEXT_COLOR} file in the specified path")
-                else:
-                    view.print_status_message("\nJson file was successfully created! You should reboot the program")
-            case "n":
-                pass
-            case _:
-                view.print_error_message("Wrong command, try again")
-
-    @staticmethod
-    def fill_empty_json_file() -> None:
-        """
-        Method calls if json file is empty.
-        Automatically fills an empty .json file with basic content
-        """
-        view.print_error_message("\nIt looks like your .json file is empty!"
-                                 "\nCould I initialize database in it to start work [Y/N]?"
-                                 "\nAttention! Existing .json file will be overwritten:")
-        action = input(f"{TEXT_COLOR}{LINE_SYMBOL}").lower()
-        match action:
-            case "y":
-                with open(JSON_PATH, "w") as file:
-                    file.write('{"groups_list": [{"name": "Home", "notes_list": []}]}')
-                    view.print_status_message("\nJson file was successfully updated! You should reboot the program")
-            case "n":
-                pass
-
 
 if __name__ == "__main__":
     input_handler = CustomInput()
@@ -369,16 +329,18 @@ if __name__ == "__main__":
     app_buffer = PyperclipClipboard()
     App()
 
+    database = DataBasePSQLImp()
+    App.main_loop()
     # Launching errors handling
-    try:
+    """try:
         database = DataBaseJsonImp()
         database.load_json()
     except JsonLoadingError:
         view.print_error_message(f"\nCan't find .json file in {JSON_PATH}")
-        App.create_json_file()
+        create_json_file()
     except EmptyJsonFileError:
-        App.fill_empty_json_file()
+        fill_empty_json_file()
     except JsonReadingError:
         view.print_error_message("Can't load .json file. Check it's integrity")
     else:
-        App.main_loop()
+        App.main_loop()"""

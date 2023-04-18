@@ -8,7 +8,7 @@ from datetime import datetime
 
 
 class Note(BaseModel):
-    note_id: int
+    note_id: str
     creation_date: datetime
     last_change_date: datetime
     title: str
@@ -16,7 +16,7 @@ class Note(BaseModel):
 
 
 class Group(BaseModel):
-    name: str
+    title: str
     notes_list: list[Note]
 
 
