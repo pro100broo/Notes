@@ -1,12 +1,12 @@
-"""
-PostgreSQL DataBase Implementation
-"""
+""" PostgreSQL DataBase Implementation """
+
 
 from datetime import datetime
 
 from view import View
 from databases.idatabase import DataBase
 from databases.note import Note
+
 from settings.colors import GROUP_COLOR, TEXT_COLOR, ERROR_COLOR
 
 
@@ -19,6 +19,7 @@ class DataBasePSQLImp(DataBase):
         1. Delete all foreign keys in the following tables
         2. Make a transaction
         3. Create constraints again
+
         """
         def wrapper(*args):
             with DataBasePSQLImp.connection.cursor() as cursor:

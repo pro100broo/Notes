@@ -1,0 +1,3 @@
+class TablesDoesNotExists(Exception):
+    pass
+

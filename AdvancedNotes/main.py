@@ -10,9 +10,7 @@ Navigation in autocompletion and text redactor with keyboard arrows.
 
 import os
 import pyperclip
-import psycopg2
 
-from psycopg2.errors import UndefinedTable
 from prompt_toolkit.clipboard.pyperclip import PyperclipClipboard
 
 from view import View
@@ -20,7 +18,8 @@ from psql import DataBasePSQLImp
 from custom_input import CustomInput
 
 from databases.note import Note
-from databases.psql_impl.config import HOST, PORT, USER, PASSWORD, DATA_BASE_NAME
+from databases.psql_impl.connection import check_connection
+from databases.psql_impl.config import USER, DATA_BASE_NAME
 
 from settings.commands import MAIN_COMMANDS, GROUPS_COMMANDS, NOTES_COMMANDS
 from settings.colors import TEXT_COLOR, STATUS_COLOR
@@ -342,19 +341,10 @@ if __name__ == "__main__":
     app_buffer = PyperclipClipboard()
     App()
 
-    # First connection attempt
-    try:
-        connection = psycopg2.connect(
-            host=HOST,
-            port=PORT,
-            user=USER,
-            password=PASSWORD,
-            database=DATA_BASE_NAME
-        )
-    except Exception as error_text:
-        view.print_error_message(str(error_text))
-    else:
+    if connection := check_connection():
+        print(3)
         database = DataBasePSQLImp()
+
         database.set_connection(connection)
-        view.print_status_message(f"\nSuccessfully connected to PosgreSQL database 'mynotes' as user: {USER}")
+        view.print_status_message(f"\nSuccessfully connected to PostgreSQL database '{DATA_BASE_NAME}' as user: {USER}")
         App.mainloop()
