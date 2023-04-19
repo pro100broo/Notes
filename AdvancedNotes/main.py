@@ -11,6 +11,8 @@ Navigation in autocompletion and text redactor with keyboard arrows.
 import os
 import pyperclip
 import psycopg2
+
+from psycopg2.errors import UndefinedTable
 from prompt_toolkit.clipboard.pyperclip import PyperclipClipboard
 
 from view import View
@@ -18,7 +20,7 @@ from psql import DataBasePSQLImp
 from custom_input import CustomInput
 
 from databases.note import Note
-from databases.psql_impl.config import HOST, PORT, USER, PASSWORD
+from databases.psql_impl.config import HOST, PORT, USER, PASSWORD, DATA_BASE_NAME
 
 from settings.commands import MAIN_COMMANDS, GROUPS_COMMANDS, NOTES_COMMANDS
 from settings.colors import TEXT_COLOR, STATUS_COLOR
@@ -35,7 +37,7 @@ class App:
         def wrapper(*args):
             os.system('cls' if os.name == 'nt' else 'clear')
             if status_message := function(*args):
-                # os.system('cls' if os.name == 'nt' else 'clear')
+                os.system('cls' if os.name == 'nt' else 'clear')
                 view.print_status_message(status_message)
         return wrapper
 
@@ -43,20 +45,23 @@ class App:
     def _delete_confirmation(function):
         def wrapper(title):
             view.print_error_message(f"\nAre you sure to delete this [Y/N]?{TEXT_COLOR}")
-            suggestion = input(LINE_SYMBOL).lower()
-            if suggestion == "y":
-                function(title)
-            else:
-                view.print_status_message("\nThe deletion was rejected")
+            match input(LINE_SYMBOL).lower():
+                case "y":
+                    function(title)
+                case "n":
+                    view.print_status_message("\nThe deletion was rejected")
+                case _:
+                    view.print_error_message("\nInvalid input")
         return wrapper
 
     @staticmethod
     def _empty_title(function):
         def wrapper(title):
-            if not title:
-                view.print_error_message("Title shouldn't be empty")
-            else:
+            if title:
                 function(title)
+            else:
+                view.print_error_message("Title shouldn't be empty")
+
         return wrapper
 
     @staticmethod
@@ -65,10 +70,11 @@ class App:
             """
             :param args: args[0] -> The name of the group
             """
-            if not database.check_group(args[0]):
-                view.print_error_message(f"Group title: '{args[0]}' doesn't exists")
-            else:
+            if database.check_group(args[0]):
                 function(*args)
+            else:
+                view.print_error_message(f"Group title: '{args[0]}' doesn't exists")
+
         return wrapper
 
     @staticmethod
@@ -94,23 +100,21 @@ class App:
     @staticmethod
     def _note_title_duplication(function):
         def wrapper(note_title):
-
-            if not database.check_note(note_title):
-                function(note_title)
-            else:
+            if database.check_note(note_title):
                 view.print_error_message(f"Note title: '{note_title}' already exists")
+            else:
+                function(note_title)
         return wrapper
 
     @staticmethod
     def _title_input(function):
         def wrapper():
             os.system('cls' if os.name == 'nt' else 'clear')
-            if not (new_title := input_handler.text_editor(buffered_text=App.get_attached_group(),
-                                                           multiline=False)):
+            if new_title := input_handler.text_editor(multiline=False):
+                function(new_title)
+            else:
                 os.system('cls' if os.name == 'nt' else 'clear')
                 view.print_error_message("title shouldn't be empty")
-            else:
-                function(new_title)
 
         return wrapper
 
@@ -345,7 +349,7 @@ if __name__ == "__main__":
             port=PORT,
             user=USER,
             password=PASSWORD,
-            database="mynotes"
+            database=DATA_BASE_NAME
         )
     except Exception as error_text:
         view.print_error_message(str(error_text))

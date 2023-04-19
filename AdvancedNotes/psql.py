@@ -1,3 +1,7 @@
+"""
+PostgreSQL DataBase Implementation
+"""
+
 from datetime import datetime
 
 from view import View
@@ -5,11 +9,17 @@ from databases.idatabase import DataBase
 from databases.note import Note
 from settings.colors import GROUP_COLOR, TEXT_COLOR, ERROR_COLOR
 
+
 class DataBasePSQLImp(DataBase):
     connection = None
 
     @staticmethod
     def _update_foreign_keys(function):
+        """
+        1. Delete all foreign keys in the following tables
+        2. Make a transaction
+        3. Create constraints again
+        """
         def wrapper(*args):
             with DataBasePSQLImp.connection.cursor() as cursor:
                 try:
@@ -22,7 +32,6 @@ class DataBasePSQLImp(DataBase):
                         "ALTER TABLE groups_notes ADD CONSTRAINT groups_notes_group_id_fkey FOREIGN KEY (group_id) "
                         "REFERENCES groups(id)"
                     )
-
                     cursor.execute(
                         "ALTER TABLE groups_notes ADD CONSTRAINT groups_notes_note_id_fkey FOREIGN KEY (note_id) "
                         "REFERENCES notes(id)"
@@ -36,6 +45,8 @@ class DataBasePSQLImp(DataBase):
 
     @staticmethod
     def _make_transaction(function):
+        """ Decorator for the safety transactions """
+
         def wrapper(*args):
             with DataBasePSQLImp.connection.cursor() as cursor:
                 try:
@@ -47,6 +58,10 @@ class DataBasePSQLImp(DataBase):
                     DataBasePSQLImp.connection.commit()
                     return result
         return wrapper
+
+    @staticmethod
+    def set_connection(connection) -> None:
+        DataBasePSQLImp.connection = connection
 
     @staticmethod
     def get_grouped_notes() -> list[str]:
@@ -62,10 +77,6 @@ class DataBasePSQLImp(DataBase):
                 column.append(ERROR_COLOR + "empty group" + TEXT_COLOR)
             column.append("")
         return column[:-1]
-
-    @staticmethod
-    def set_connection(connection) -> None:
-        DataBasePSQLImp.connection = connection
 
     @staticmethod
     @_make_transaction
@@ -155,7 +166,6 @@ class DataBasePSQLImp(DataBase):
             DataBasePSQLImp.connection.commit()
         else:
             cursor.execute(f"UPDATE notes SET text=%s WHERE title=%s", (text, note_title))
-
 
     @staticmethod
     @_make_transaction
