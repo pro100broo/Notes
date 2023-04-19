@@ -91,26 +91,26 @@ class DataBasePSQLImp(DataBase):
     @staticmethod
     @_make_transaction
     def get_all_groups(cursor) -> list[str]:
-        cursor.execute("select title FROM groups")
+        cursor.execute("SELECT title FROM groups")
         return [title[0] for title in cursor.fetchall()]
 
     @staticmethod
     @_make_transaction
     def get_all_notes(cursor) -> list[str]:
-        cursor.execute("select title FROM notes")
+        cursor.execute("SELECT title FROM notes")
         return [title[0] for title in cursor.fetchall()]
 
     @staticmethod
     @_make_transaction
     def check_group(group_title: str, cursor) -> int | None:
-        cursor.execute(f"select COUNT(*) from groups WHERE id='{group_title}'")
+        cursor.execute(f"SELECT COUNT(*) from groups WHERE id='{group_title}'")
         if cursor.fetchall()[0][0]:
             return 1
 
     @staticmethod
     @_make_transaction
     def check_note(note_title: str, cursor) -> Note | None:
-        cursor.execute(f"select id, text, creation_date, last_change_date from notes WHERE title='{note_title}'")
+        cursor.execute(f"SELECT id, text, creation_date, last_change_date from notes WHERE title='{note_title}'")
         if note_data := cursor.fetchall():
             return Note(
                 note_id=note_data[0][0],
