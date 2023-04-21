@@ -11,15 +11,10 @@ Navigation in autocompletion and text redactor with keyboard arrows.
 import os
 import pyperclip
 
-from prompt_toolkit.clipboard.pyperclip import PyperclipClipboard
-
 from view import View
-from psql import DataBasePSQLImp
 from custom_input import CustomInput
-
 from databases.note import Note
-from databases.psql_impl.connection import check_connection
-from databases.psql_impl.config import USER, DATA_BASE_NAME
+from db_loader import choose_db
 
 from settings.commands import MAIN_COMMANDS, GROUPS_COMMANDS, NOTES_COMMANDS
 from settings.colors import TEXT_COLOR, STATUS_COLOR
@@ -37,20 +32,20 @@ class App:
             os.system('cls' if os.name == 'nt' else 'clear')
             if status_message := function(*args):
                 os.system('cls' if os.name == 'nt' else 'clear')
-                view.print_status_message(status_message)
+                View.print_status_message(status_message)
         return wrapper
 
     @staticmethod
     def _delete_confirmation(function):
         def wrapper(title):
-            view.print_error_message(f"\nAre you sure to delete this [Y/N]?{TEXT_COLOR}")
+            View.print_error_message(f"\nAre you sure to delete this [Y/N]?{TEXT_COLOR}")
             match input(LINE_SYMBOL).lower():
                 case "y":
                     function(title)
                 case "n":
-                    view.print_status_message("\nThe deletion was rejected")
+                    View.print_status_message("\nThe deletion was rejected")
                 case _:
-                    view.print_error_message("\nInvalid input")
+                    View.print_error_message("\nInvalid input")
         return wrapper
 
     @staticmethod
@@ -59,7 +54,7 @@ class App:
             if title:
                 function(title)
             else:
-                view.print_error_message("Title shouldn't be empty")
+                View.print_error_message("Title shouldn't be empty")
 
         return wrapper
 
@@ -72,7 +67,7 @@ class App:
             if database.check_group(args[0]):
                 function(*args)
             else:
-                view.print_error_message(f"Group title: '{args[0]}' doesn't exists")
+                View.print_error_message(f"Group title: '{args[0]}' doesn't exists")
 
         return wrapper
 
@@ -80,9 +75,9 @@ class App:
     def _wrong_note_title(function):
         def wrapper(note_title):
             if not database.get_attached_group_notes(group_title := App.get_attached_group()):
-                view.print_error_message(f"Group: '{group_title}' is empty")
+                View.print_error_message(f"Group: '{group_title}' is empty")
             elif not (database.check_note(note_title)):
-                view.print_error_message(f"Note title: '{note_title}' doesn't exists")
+                View.print_error_message(f"Note title: '{note_title}' doesn't exists")
             else:
                 function(note_title)
         return wrapper
@@ -91,7 +86,7 @@ class App:
     def _group_title_duplication(function):
         def wrapper(group_title):
             if database.check_group(group_title):
-                view.print_error_message(f"Group title: '{group_title}' already exists")
+                View.print_error_message(f"Group title: '{group_title}' already exists")
             else:
                 function(group_title)
         return wrapper
@@ -100,7 +95,7 @@ class App:
     def _note_title_duplication(function):
         def wrapper(note_title):
             if database.check_note(note_title):
-                view.print_error_message(f"Note title: '{note_title}' already exists")
+                View.print_error_message(f"Note title: '{note_title}' already exists")
             else:
                 function(note_title)
         return wrapper
@@ -113,7 +108,7 @@ class App:
                 function(new_title)
             else:
                 os.system('cls' if os.name == 'nt' else 'clear')
-                view.print_error_message("title shouldn't be empty")
+                View.print_error_message("title shouldn't be empty")
 
         return wrapper
 
@@ -123,7 +118,7 @@ class App:
             if App.get_attached_group():
                 function(title)
             else:
-                view.print_error_message(f"Group doesn't selected")
+                View.print_error_message(f"Group doesn't selected")
         return wrapper
 
     @staticmethod
@@ -132,7 +127,7 @@ class App:
             if App.get_attached_note():
                 function()
             else:
-                view.print_error_message(f"Note doesn't selected")
+                View.print_error_message(f"Note doesn't selected")
         return wrapper
 
     @staticmethod
@@ -144,30 +139,30 @@ class App:
 
     @staticmethod
     def mainloop() -> int:
-        view.print_text("\nWelcome to MyNotes!\nEnter 'help' option to show context menu")
+        View.print_text("\nWelcome to MyNotes!\nEnter 'help' option to show context menu")
         while True:
             try:
-                view.print_attached_group_and_note(App.get_attached_group(), App.get_attached_note())
+                View.print_attached_group_and_note(App.get_attached_group(), App.get_attached_note())
                 command = input_handler.command_input(database.get_all_groups(),
                                                       database.get_attached_group_notes(App.get_attached_group()))
                 match command.split():
 
                     # Main menu commands
                     case "help", :
-                        view.print_table("Main commands:", MAIN_COMMANDS["commands"], MAIN_COMMANDS["descriptions"])
+                        View.print_table("Main commands:", MAIN_COMMANDS["commands"], MAIN_COMMANDS["descriptions"])
                     case "cls", :
                         os.system('cls' if os.name == 'nt' else 'clear')
                     case "help", "groups":
-                        view.print_table("Groups commands:", GROUPS_COMMANDS["commands"],
+                        View.print_table("Groups commands:", GROUPS_COMMANDS["commands"],
                                          GROUPS_COMMANDS["descriptions"])
                     case "help", "notes":
-                        view.print_table("Notes commands:", NOTES_COMMANDS["commands"], NOTES_COMMANDS["descriptions"])
+                        View.print_table("Notes commands:", NOTES_COMMANDS["commands"], NOTES_COMMANDS["descriptions"])
                     case "quit", :
                         return 0
 
                     # Groups navigation commands
                     case "groups", :
-                        view.print_table_with_pointer("Groups", database.get_all_groups(), App.get_attached_group())
+                        View.print_table_with_pointer("Groups", database.get_all_groups(), App.get_attached_group())
                     case "group", "select", *group_title:
                         App.group_select(" ".join(group_title))
 
@@ -183,7 +178,7 @@ class App:
 
                     # Notes navigation commands
                     case "notes", :
-                        view.print_table_with_pointer("Notes", database.get_grouped_notes(),
+                        View.print_table_with_pointer("Notes", database.get_grouped_notes(),
                                                       note.title if (note := App.get_attached_note()) else "")
 
                     case "note", "select", *note_title:
@@ -212,10 +207,10 @@ class App:
                         App.note_delete()
 
                     case _:
-                        view.print_error_message("Wrong command, try again")
+                        View.print_error_message("Wrong command, try again")
 
             except KeyboardInterrupt:
-                view.print_error_message("Ctrl+C hotkey was intercepted. Use 'quit' option to close the program!")
+                View.print_error_message("Ctrl+C hotkey was intercepted. Use 'quit' option to close the program!")
 
     @staticmethod
     def __set_attached_group(group_title: str | None) -> None:
@@ -247,7 +242,7 @@ class App:
         database.create_group(group_title)
         App.__set_attached_group(group_title)
         App.__set_attached_note(None)
-        view.print_status_message(f"\nNew group: {group_title} was successfully created")
+        View.print_status_message(f"\nNew group: {group_title} was successfully created")
 
     @staticmethod
     @_title_input
@@ -266,7 +261,7 @@ class App:
     def group_delete(group_title: str) -> None:
         database.delete_group(group_title)
         App.__set_attached_group(None)
-        view.print_status_message(f"\nGroup: '{group_title}' was successfully deleted")
+        View.print_status_message(f"\nGroup: '{group_title}' was successfully deleted")
 
     @staticmethod
     @_empty_title
@@ -279,20 +274,20 @@ class App:
     @_note_not_selected
     @_get_note
     def note_read(note: Note) -> None:
-        view.print_note(note.title, note.text)
+        View.print_note(note.title, note.text)
 
     @staticmethod
     @_note_not_selected
     @_get_note
     def note_info(note: Note) -> None:
-        view.print_note_info(note)
+        View.print_note_info(note)
 
     @staticmethod
     @_note_not_selected
     @_get_note
     def note_copy(note: Note) -> None:
         """ Copies text of the attached note in the system clipboard """
-        view.print_text(f"\n{STATUS_COLOR}Note's text was copied in the global clipboard!!!")
+        View.print_text(f"\n{STATUS_COLOR}Note's text was copied in the global clipboard!!!")
         pyperclip.copy(note.text)
 
     @staticmethod
@@ -332,19 +327,12 @@ class App:
     def note_delete(note: Note) -> None:
         database.delete_note(note.note_id)
         App.__set_attached_note(None)
-        view.print_status_message(f"Note: '{note.title}' was successfully deleted!")
+        View.print_status_message(f"Note: '{note.title}' was successfully deleted!")
 
 
 if __name__ == "__main__":
-    input_handler = CustomInput()
-    view = View()
-    app_buffer = PyperclipClipboard()
-    App()
-
-    if connection := check_connection():
-        print(3)
-        database = DataBasePSQLImp()
-
-        database.set_connection(connection)
-        view.print_status_message(f"\nSuccessfully connected to PostgreSQL database '{DATA_BASE_NAME}' as user: {USER}")
+    if database := choose_db():
+        App()
+        View()
+        input_handler = CustomInput()
         App.mainloop()

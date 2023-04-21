@@ -1,13 +1,9 @@
-"""
-Database Abstract class
-I am planning to add a support of the PostgreSQL and MongoDB with a common interface
-"""
-
 from abc import ABC, abstractmethod
 from .note import Note
 
 
 class DataBase(ABC):
+    """ Database Interface """
     @staticmethod
     @abstractmethod
     def get_grouped_notes() -> list[str]:
@@ -45,7 +41,7 @@ class DataBase(ABC):
 
     @staticmethod
     @abstractmethod
-    def update_group(new_group_title: str) -> None:
+    def update_group(group_title: str, new_group_title: str) -> None:
         pass
 
     @staticmethod
@@ -60,11 +56,11 @@ class DataBase(ABC):
 
     @staticmethod
     @abstractmethod
-    def update_note(note_title: int, text: str, option: str) -> None:
+    def update_note(note_title: str, text: str, option: str) -> None:
         pass
 
     @staticmethod
     @abstractmethod
-    def delete_note(note_title: int) -> None:
+    def delete_note(note_title: str) -> None:
         pass
 

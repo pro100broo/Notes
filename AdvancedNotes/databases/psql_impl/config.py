@@ -7,9 +7,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Database constants
-HOST = os.environ.get("HOST")[::]
-PORT = os.environ.get("PORT")[::]
-USER = os.environ.get("USER")[::]
-PASSWORD = os.environ.get("PASSWORD")[::]
-DATA_BASE_NAME = os.environ.get("DATA_BASE_NAME")[::]
+PSQL_HOST = os.environ.get("PSQL_HOST")[::]
+PSQL_PORT = os.environ.get("PSQL_PORT")[::]
+PSQL_USER = os.environ.get("PSQL_USER")[::]
+PSQL_PASSWORD = os.environ.get("PSQL_PASSWORD")[::]
+PSQL_DATA_BASE_NAME = os.environ.get("PSQL_DATA_BASE_NAME")[::]
 

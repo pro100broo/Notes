@@ -1,5 +1,6 @@
 # Simple console application for easy interaction with notes  
-Database in Json format includes notes and groups of notes with a custom names.  
+Database includes notes and groups of notes with a custom names.  
+PostgreSQL and MongoDB supports  
 The application supports auto-completion of user's commands and multiline text redactor.
 
 # Attention!  
@@ -15,6 +16,8 @@ Folowing public modules:
 ~ colorama  
 ~ pyperclip  
 ~ prettytable 
+~ psycopg2
+~ pymongo
   
 # Future plans  
 ~ Crossplatform realisation  

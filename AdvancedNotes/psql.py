@@ -1,6 +1,3 @@
-""" PostgreSQL DataBase Implementation """
-
-
 from datetime import datetime
 
 from view import View
@@ -19,7 +16,6 @@ class DataBasePSQLImp(DataBase):
         1. Delete all foreign keys in the following tables
         2. Make a transaction
         3. Create constraints again
-
         """
         def wrapper(*args):
             with DataBasePSQLImp.connection.cursor() as cursor:
@@ -114,7 +110,7 @@ class DataBasePSQLImp(DataBase):
         cursor.execute(f"SELECT id, text, creation_date, last_change_date from notes WHERE title='{note_title}'")
         if note_data := cursor.fetchall():
             return Note(
-                note_id=note_data[0][0],
+                note_id=note_title,
                 title=note_title,
                 text=note_data[0][1],
                 creation_date=note_data[0][2],
@@ -160,9 +156,12 @@ class DataBasePSQLImp(DataBase):
     @staticmethod
     @_make_transaction
     @_update_foreign_keys
-    def update_note(note_title: int, text: str, option: str, cursor) -> None:
+    def update_note(note_title: str, text: str, option: str, cursor) -> None:
         if option == "title":
-            cursor.execute(f"UPDATE notes SET id=%s, title=%s WHERE title=%s", (text, text, note_title))
+            cursor.execute(
+                f"UPDATE notes SET id=%s, title=%s, last_change_date=%s WHERE title=%s",
+                (text, text, datetime.now(), note_title)
+            )
             cursor.execute(f"UPDATE groups_notes SET note_id=%s WHERE note_id=%s", (text, note_title))
             DataBasePSQLImp.connection.commit()
         else:
@@ -170,7 +169,7 @@ class DataBasePSQLImp(DataBase):
 
     @staticmethod
     @_make_transaction
-    def delete_note(note_title: int, cursor) -> None:
+    def delete_note(note_title: str, cursor) -> None:
         cursor.execute(f"DELETE FROM notes WHERE title={note_title}")
         cursor.execute(f"DELETE FROM groups_notes WHERE note_id={note_title}")
 
