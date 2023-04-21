@@ -323,6 +323,8 @@ class App:
 
     @staticmethod
     @_note_not_selected
+    @_get_note
+    @_empty_title
     @_delete_confirmation
     def note_delete(note: Note) -> None:
         database.delete_note(note.note_id)

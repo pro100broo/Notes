@@ -169,9 +169,10 @@ class DataBasePSQLImp(DataBase):
 
     @staticmethod
     @_make_transaction
+    @_update_foreign_keys
     def delete_note(note_title: str, cursor) -> None:
-        cursor.execute(f"DELETE FROM notes WHERE title={note_title}")
-        cursor.execute(f"DELETE FROM groups_notes WHERE note_id={note_title}")
+        cursor.execute(f"DELETE FROM notes WHERE title='{note_title}'")
+        cursor.execute(f"DELETE FROM groups_notes WHERE note_id='{note_title}'")
 
 
 view = View()

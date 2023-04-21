@@ -70,7 +70,7 @@ class CustomInput:
             rprompt='100 character per string limit!' if multiline else '30 character limit!',
             default=buffered_text
         )
-        return "\n".join([row[:100] for row in text.split("\n")]) if multiline else text[:30]
+        return "\n".join([row[:100] for row in text.replace("\r", "").split("\n")]) if multiline else text[:30]
 
     @staticmethod
     def __toolbar(multiline: bool) -> str:
