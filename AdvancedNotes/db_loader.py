@@ -1,3 +1,8 @@
+"""
+You can choose database before launching program.
+choose_db() function checks existence of the chosen database
+"""
+
 import os
 
 from view import View
@@ -23,6 +28,7 @@ def choose_db() -> DataBase:
                 database.set_connection(test_connection.check_connection())
                 os.system('cls' if os.name == 'nt' else 'clear')
                 View.print_status_message(f"Successfully connected to MongoDB 'mynotes'")
+
                 return database
 
         case "psql":

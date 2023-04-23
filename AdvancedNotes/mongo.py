@@ -1,3 +1,8 @@
+"""
+MongoDB database implementation
+current psql version - 15.0
+"""
+
 from datetime import datetime
 from pymongo.collection import Collection
 

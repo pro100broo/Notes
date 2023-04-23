@@ -6,6 +6,8 @@ To access a group of notes or individual notes and change/read them,
 you need to pin them with the 'select' command.
 Application supports commands autocompletion and multiline text editor.
 Navigation in autocompletion and text redactor with keyboard arrows.
+
+Also, u can easily switch between the other database realisations
 """
 
 import os
@@ -304,10 +306,11 @@ class App:
     @staticmethod
     @_note_not_selected
     @_get_note
-    @_screen_cleaner
+    # @_screen_cleaner
     def note_edit_text(note: Note) -> str:
         new_text = input_handler.text_editor(buffered_text=note.text)
         database.update_note(note.note_id, new_text, "text")
+        App.__set_attached_note(database.check_note(note.note_id))
         return "Note text was successfully changed!"
 
     @staticmethod

@@ -1,3 +1,5 @@
+""" Generic Util class for checking, making connection and creating tables"""
+
 import psycopg2
 
 from psycopg2.errors import UndefinedTable, OperationalError
